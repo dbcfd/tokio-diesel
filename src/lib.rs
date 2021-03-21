@@ -12,6 +12,7 @@ use diesel::{
 };
 use std::{error::Error as StdError, fmt};
 use tokio::task;
+use diesel::r2d2::R2D2Connection;
 
 pub type AsyncResult<R> = Result<R, AsyncError>;
 
@@ -67,7 +68,7 @@ where
 #[async_trait]
 impl<Conn> AsyncSimpleConnection<Conn> for Pool<ConnectionManager<Conn>>
 where
-    Conn: 'static + Connection,
+    Conn: 'static + Connection + R2D2Connection,
 {
     #[inline]
     async fn batch_execute_async(&self, query: &str) -> AsyncResult<()> {
@@ -99,7 +100,7 @@ where
 #[async_trait]
 impl<Conn> AsyncConnection<Conn> for Pool<ConnectionManager<Conn>>
 where
-    Conn: 'static + Connection,
+    Conn: 'static + Connection + R2D2Connection,
 {
     #[inline]
     async fn run<R, Func>(&self, f: Func) -> AsyncResult<R>
@@ -163,7 +164,7 @@ where
 impl<T, Conn> AsyncRunQueryDsl<Conn, Pool<ConnectionManager<Conn>>> for T
 where
     T: Send + RunQueryDsl<Conn>,
-    Conn: 'static + Connection,
+    Conn: 'static + Connection + R2D2Connection,
 {
     async fn execute_async(self, asc: &Pool<ConnectionManager<Conn>>) -> AsyncResult<usize>
     where
